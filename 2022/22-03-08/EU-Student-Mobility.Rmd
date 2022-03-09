@@ -107,7 +107,7 @@ external_transfer_plot
 
 ```
 
-```{r, fig.showtext=TRUE, fig.width=20, fig.height=12}
+```{r, fig.showtext=TRUE}
 
 p <- ggplot(data = filtered_map, aes(x=long, y=lat)) +
   geom_map(aes(map_id=region),map = filtered_map, color="black", fill="#7f7f7f", size=0.1, alpha=0.05) +
@@ -159,7 +159,6 @@ p
 ```
 
 ```{r, fig.showtext=T}
-ggsave(p, filename = "Erasmus-Mobility.png",
-       device = "png", width = 35, height = 20.5,
-       units = "cm", dpi = 400)
+ggsave(p, filename = "Erasmus-Mobility-v2.png",
+       width = 10.5, height = 8, device = ragg::agg_png, dpi = 300)
 ```
