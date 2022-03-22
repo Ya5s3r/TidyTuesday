@@ -79,6 +79,7 @@ names2017
 # final figure, using Patchwork layout
 # sometimes throws an error about words not fitting on page - this seems just to relate to the console view
 # seems fine in png file, or when zooming in
+
 names1920 / names1950 / names1980 / names2017 +
   plot_layout(heights = c(20, 20, 20, 40), widths = c(20, 20)) +
   plot_annotation(
