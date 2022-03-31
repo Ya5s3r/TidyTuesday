@@ -24,4 +24,4 @@ Analysis of collegiate sport expenditure by gender in 2019.
 
 ![Screenshot](2022/22-03-29/sports-exp.png =40x30)
 
-<img src="https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-03-29/sports-exp.png" width="200" height="300" />
+<img src="https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-03-29/sports-exp.png" width="1000" height="1500" />
