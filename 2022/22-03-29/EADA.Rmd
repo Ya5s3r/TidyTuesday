@@ -1,0 +1,308 @@
+---
+title: "EADA"
+author: "Yasser Mushtaq"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggtext)
+library(ggrepel)
+library(patchwork)
+sports <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-03-29/sports.csv')
+extrafont::loadfonts()
+head(sports)
+```
+
+
+
+```{r}
+# data exploration
+# some aggregates - didn't use in the end
+sports_agg <- sports %>%
+  select(year, institution_name, exp_men, exp_women, total_exp_menwomen, sports) %>%
+  mutate(
+    exp_men = replace_na(exp_men, 0),
+    exp_women = replace_na(exp_women, 0)
+  ) %>%
+  group_by(year, sports) %>%
+  mutate(
+    total_exp_men = sum(exp_men),
+    total_exp_women = sum(exp_women),
+    diff_exp = total_exp_women - total_exp_men,
+    diff_abs = abs(total_exp_women - total_exp_men),
+    gender_greater_exp = case_when(diff_exp <0 ~ "exp_men",
+            diff_exp >0 ~ "exp_women"),
+    average_exp_men = mean(exp_men),
+    average_exp_women = mean(exp_women),
+    diff_avg = average_exp_men - average_exp_women,
+    diff_avg_abs = abs(average_exp_men - average_exp_women)
+  ) %>%
+  ungroup() %>%
+  filter(year == 2019)
+  
+```
+
+```{r}
+# data to plot
+# labels for top spenders in each sport (excl big sports)
+labels_m <- sports %>%
+  filter(year == 2019, !sports %in% c("Football", "Baseball", "Basketball")) %>%
+  group_by(sports) %>%
+  slice_max(order_by = exp_men, n = 1) %>%
+  select(institution_name, exp_men) %>%
+  ungroup()
+
+labels_f <- sports %>%
+  filter(year == 2019, !sports %in% c("Football", "Baseball", "Basketball")) %>%
+  group_by(sports) %>%
+  slice_max(order_by = exp_women, n = 1) %>%
+  select(institution_name, exp_women) %>%
+  ungroup()
+
+
+# big three sports
+# get labels for top three spenders in each sport
+labels_top_exp_m <- sports %>%
+  filter(year == 2019, sports %in% c("Football", "Baseball", "Basketball")) %>%
+  group_by(sports) %>%
+  slice_max(order_by = exp_men, n = 3) %>%
+  select(institution_name, exp_men) %>%
+  ungroup()
+
+labels_top_exp_f <- sports %>%
+  filter(year == 2019, sports %in% c("Football", "Baseball", "Basketball")) %>%
+  group_by(sports) %>%
+  slice_max(order_by = exp_women, n = 3) %>%
+  select(institution_name, exp_women) %>%
+  ungroup()
+
+## create final data to plot with labels included
+# big sports
+big_sports_plot_data <- sports %>%
+  filter(year == 2019, sports %in% c("Football", "Baseball", "Basketball")) %>%
+  left_join(labels_top_exp_m, by = c("sports", "institution_name")) %>%
+  left_join(labels_top_exp_f, by = c("sports", "institution_name")) %>%
+  rename(
+    exp_men = exp_men.x,
+    exp_women = exp_women.x,
+    exp_men_label = exp_men.y,
+    exp_women_label = exp_women.y
+  )
+
+# remaining sports
+other_sports_plot_data <- sports %>%
+  filter(year == 2019, !sports %in% c("Football", "Baseball", "Basketball")) %>%
+  left_join(labels_m, by = c("sports", "institution_name")) %>%
+  left_join(labels_f, by = c("sports", "institution_name")) %>%
+  rename(
+    exp_men = exp_men.x,
+    exp_women = exp_women.x,
+    exp_men_label = exp_men.y,
+    exp_women_label = exp_women.y
+  )
+
+# medians for plots
+big_medians <- sports %>%
+  filter(year == 2019, sports %in% c("Football", "Baseball", "Basketball")) %>%
+  group_by(sports) %>%
+  summarise(
+    median_m = median(exp_men, na.rm = TRUE),
+    median_f = median(exp_women, na.rm = TRUE)
+  )
+
+other_medians <- sports %>%
+  filter(year == 2019, !sports %in% c("Football", "Baseball", "Basketball")) %>%
+  group_by(sports) %>%
+  summarise(
+    median_m = median(exp_men, na.rm = TRUE),
+    median_f = median(exp_women, na.rm = TRUE)
+  )
+```
+
+
+
+```{r}
+theme_update(
+  plot.background = element_rect(fill = "grey98", color = "grey98"),
+  panel.background = element_rect(fill = "grey98", color = "grey98"),
+  plot.title = element_markdown(color = "grey10", size = 14, face = "bold",
+                                margin = margin(t = 15)),
+  plot.subtitle = element_markdown(color = "grey30", size = 11,
+                                   lineheight = 1.35,
+                                   margin = margin(t = 15, b = 40)),
+  text = element_text(family = "Roboto Condensed"),
+  plot.caption = element_markdown(color = "grey30", size = 10,
+                              lineheight = 1.2, hjust = 0)
+)
+```
+
+```{r, fig.showtext=TRUE}
+### plotting
+
+# axis breaks for big three
+breaks_m_big <- c(5000000, seq(10000000, 65000000, by = 10000000))
+breaks_f_big <- c(-500000, seq(-1000000, -8500000, by = -1000000))
+labels_m_big <- c("$5m", "$10m", "$20m", "$30m", "$40m", "$50m", "$60m")
+labels_f_big <- c("$500,000", "$1m", "$2m", "$3m", "$4m", "$5m", "$6m", "$7m", "$8m")
+
+# axis breaks for others  
+breaks_m <- c(500000, seq(1000000, 6000000, by = 1000000))
+breaks_f <- c(-500000, seq(-1000000, -6500000, by = -1000000))
+labels <- c("$500,000", "$1m", "$2m", "$3m", "$4m", "$5m", "$6m")
+
+
+### plots
+# this is needed to ensure geom_jitter and _text_repel display correctly
+# also requires label data to be in base data, hence left joins to labels above
+pos <- position_jitter(width = 0.3, seed = 2)
+
+
+big_sports_m <- ggplot(big_sports_plot_data) +
+  geom_jitter(aes(x = sports, y = exp_men), colour = "#1B9E77", alpha = 1/5, position = pos) +
+  #geom_jitter(aes(x = sports, y = -exp_women), colour = "purple", alpha = 1/5) +
+  geom_point(data = big_medians, aes(x = sports, y = median_m), size = 3, colour = "#666666", alpha = 1/2, inherit.aes = FALSE) +
+  geom_text_repel(aes(x = sports, y = exp_men_label, label = institution_name), 
+                  size =3,
+                  min.segment.length = 0, 
+                  position = pos,
+                  box.padding = 0.5,
+                  segment.curvature = -0.1,
+                  segment.ncp = 3,
+                  segment.angle = 20,
+                  family = "Roboto Condensed") +
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    plot.margin = margin(0, 0, 0, 0),
+    axis.text.y = element_text(hjust=0.5, size = 10),
+    panel.grid = element_blank(),
+    text = element_text(family = "Roboto Condensed")
+  ) +
+  scale_y_continuous(breaks = breaks_m_big, labels = labels_m_big) +
+  coord_flip()
+
+
+big_sports_f <- ggplot(big_sports_plot_data) +
+  geom_jitter(aes(x = sports, y = -exp_women), colour = "#7570B3", alpha = 1/5, position = pos) +
+  geom_point(data = big_medians, aes(x = sports, y = -median_f), size = 3, colour = "#666666", alpha = 1/2, inherit.aes = FALSE) +
+  geom_text_repel(aes(x = sports, y = -exp_women_label, label = institution_name), 
+                  size =3,
+                  min.segment.length = 0, 
+                  position = pos,
+                  box.padding = 0.5,
+                  segment.curvature = -0.1,
+                  segment.ncp = 3,
+                  segment.angle = 20,
+                  family = "Roboto Condensed") +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.title = element_blank(),
+    plot.margin = margin(0, 0, 0, 0),
+    panel.grid = element_blank(),
+    plot.caption.position = "panel",
+    text = element_text(family = "Roboto Condensed"),
+    plot.title = element_markdown(color = "grey10", size = 14, face = "bold",
+                                margin = margin(t = 15)),
+    plot.subtitle = element_markdown(color = "grey30", size = 11, 
+                                   lineheight = 1.35,
+                                   margin = margin(t = 15, b = 40),),
+    plot.caption = element_markdown(color = "grey30", size = 10,
+                              lineheight = 1.2, hjust = 0)
+  ) +
+  scale_y_continuous(breaks = breaks_f_big, labels = labels_f_big) +
+  coord_flip() +
+  labs(
+    title = 'And what about the big three sports of **football**, **basketball** and **baseball**?',
+  subtitle = "The following sports receive **significantly** more investment than the sports above.<br>
+              *Note the different x-axis scales. Showing top three spenders.*",
+  caption = "Also shown is median expenditure (grey circle); 2019 data only.<br>Chart by @Yass3r"
+  )
+
+big <- big_sports_f + big_sports_m
+big
+
+
+# remaining sports
+other_sports_m <- ggplot(other_sports_plot_data) +
+  geom_jitter(aes(x = fct_rev(sports), y = exp_men), colour = "#1B9E77", alpha = 1/5, position = pos) +
+  geom_point(data = other_medians, aes(x = sports, y = median_m), size = 3, colour = "#666666", alpha = 1/2, inherit.aes = FALSE) +
+  geom_text_repel(aes(x = sports, y = exp_men_label, label = institution_name), 
+                  size =3,
+                  min.segment.length = 0, 
+                  position = pos,
+                  box.padding = 0.5,
+                  segment.curvature = -0.1,
+                  segment.ncp = 3,
+                  segment.angle = 20,
+                  family = "Roboto Condensed") +
+  theme_minimal() +
+  theme(
+    axis.title = element_blank(),
+    plot.margin = margin(0, 0, 0, 0),
+    axis.text.y = element_text(hjust=0.5, size = 10),
+    panel.grid = element_blank(),
+    text = element_text(family = "Roboto Condensed")
+  ) +
+  scale_y_continuous(breaks = breaks_m, labels = labels) +
+  coord_flip()
+
+
+other_sports_f <- ggplot(other_sports_plot_data) +
+  geom_jitter(aes(x = fct_rev(sports), y = -exp_women), colour = "#7570B3", alpha = 1/5, position = pos) +
+  geom_point(data = other_medians, aes(x = sports, y = -median_f), size = 3, colour = "#666666", alpha = 1/2, inherit.aes = FALSE) +
+  geom_text_repel(aes(x = sports, y = -exp_women_label, label = institution_name), 
+                  size =3,
+                  min.segment.length = 0, 
+                  position = pos,
+                  box.padding = 0.5,
+                  segment.curvature = -0.1,
+                  segment.ncp = 3,
+                  segment.angle = 20,
+                  family = "Roboto Condensed") +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    axis.title = element_blank(),
+    plot.margin = margin(0, 0, 0, 0),
+    panel.grid = element_blank(),
+    text = element_text(family = "Roboto Condensed")
+  ) +
+  scale_y_continuous(breaks = breaks_f, labels = labels) +
+  coord_flip()
+
+others <- other_sports_f + other_sports_m
+others <- others + plot_annotation(
+  title = 'Which institutions invest the most in each sport?',
+  subtitle = "Distribution of expenditure by sport and gender, <span style='color:#4f1f10'>**male (right)**</span>
+              and <span style='color:#4f1f10'>**female (left)**</span>.<br>
+              There is clear disparity across some sports in terms of male and female expenditure.<br>
+              Examples including **gymnastics**, **wrestling** and **softball**.") &
+  theme(text = element_text("Roboto Condensed"))
+#others
+```
+
+
+
+```{r, fig.showtext=TRUE}
+# final figure
+wrap_elements(others) / big +
+  plot_layout(heights = c(65, 8), widths = c(20, 20))
+
+ggsave(filename = "sports-exp.png",
+         width = 40, 
+         height = 30, 
+         units = "cm",
+         device = ragg::agg_png,
+         dpi = 300)
+```
+
+
+
+
+
