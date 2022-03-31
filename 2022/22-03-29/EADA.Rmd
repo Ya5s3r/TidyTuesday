@@ -159,6 +159,7 @@ labels <- c("$500,000", "$1m", "$2m", "$3m", "$4m", "$5m", "$6m")
 ### plots
 # this is needed to ensure geom_jitter and _text_repel display correctly
 # also requires label data to be in base data, hence left joins to labels above
+# as per https://github.com/slowkow/ggrepel/issues/123
 pos <- position_jitter(width = 0.3, seed = 2)
 
 
