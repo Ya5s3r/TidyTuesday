@@ -23,3 +23,5 @@ Analysis of collegiate sport expenditure by gender in 2019.
 [Code](https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-03-29/EADA.Rmd)
 
 ![Screenshot](2022/22-03-29/sports-exp.png =40x30)
+
+<img src="https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-03-29/sports-exp.png" width="40" height="30" />
