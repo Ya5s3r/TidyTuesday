@@ -22,6 +22,4 @@ A look at baby names as a proportion of total births per year. Analysis of name 
 Analysis of collegiate sport expenditure by gender in 2019.
 [Code](https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-03-29/EADA.Rmd)
 
-![Screenshot](2022/22-03-29/sports-exp.png =40x30)
-
-<img src="https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-03-29/sports-exp.png" width="1000" height="1500" />
+![Screenshot](2022/22-03-29/sports-exp.png)
