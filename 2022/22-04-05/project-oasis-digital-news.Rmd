@@ -95,7 +95,7 @@ ggplot() +
   scale_fill_gradientn(colors=met.brewer("VanGogh1", direction = -1)) +
   labs(
     title = 'Digital News Publications',
-  subtitle = "Mapping digital news outlets across the **US**<br>
+  subtitle = "Mapping small, independent digital news outlets across the **US**<br>
               The states of <span style='color:#020B97'>California</span>, <span style='color:#020B97'>New York</span> and               <span style='color:#020B97'>New Jersey</span> feature prominently<br>
               <span style='color:#E72522'>Top 20 cities indicated</span>",
   caption = "Using {MetBrewer} VanGogh1 colour scale <br>Chart by @Yass3r",
