@@ -1,0 +1,130 @@
+---
+title: "project-oasis-digital-publications"
+author: "Yasser Mushtaq"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(sf)
+library(viridis)
+library(maps)
+library(ggrepel)
+library(MetBrewer)
+library(ggtext)
+extrafont::loadfonts()
+tuesdata <- tidytuesdayR::tt_load(2022, week = 14)
+news_orgs <- tuesdata$news_orgs
+
+head(news_orgs)
+```
+
+```{r}
+# states
+ommitted_states <- c("AK","VI","AS","GU","MP","HI", "PR")
+
+publications_state <- 
+  news_orgs %>%
+  group_by(state, country) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  filter(country == "United States")
+
+# Load states shapefile using tigris package
+# filter out states to omit
+states <- tigris::states() %>% 
+  st_transform("ESRI:102003") %>% 
+  filter(!STUSPS %in% ommitted_states)
+
+states_count <- states %>%
+  left_join(publications_state, by = c("STUSPS" = "state"))
+
+# cities
+publications_city <- news_orgs %>%
+  filter(!state %in% ommitted_states, country == "United States") %>%
+  mutate(city = str_replace(city, "Brooklyn", "New York")) %>%
+  group_by(city) %>%
+  summarise(count = n(), .groups = "drop") %>% 
+  filter(city != "Newark") # filter out Newark as obscured by NY
+
+# cities for map
+us_cities <- maps::us.cities %>%
+  mutate(name = str_trim(str_sub(name,1,nchar(name)-2)),
+         name = str_to_title(name))
+
+# join city mapping data to city count data
+top_20_cities <- publications_city %>%
+  filter(!is.na(city)) %>%
+  slice_max(order_by = count, n = 20) %>%
+  left_join(us_cities, by = c("city" = "name"))
+top_20_cities
+
+# convert the data frame with coordinates to sf format to plot
+top_20_cities <- top_20_cities %>% 
+  st_as_sf(coords = c("long", "lat"), remove = FALSE) %>% 
+  #st_set_crs(4326) %>% 
+  st_transform("ESRI:102003")
+```
+
+```{r}
+# plot
+ggplot() +
+  geom_sf(data = states_count, aes(fill = count), size = .1) +
+  geom_sf(data = top_20_cities, aes(size = count), colour = "#E72522", alpha = 1/2) +  #BD6DF8
+  # below as per https://yutani.rbind.io/post/geom-sf-text-and-geom-sf-label-are-coming/
+  geom_text_repel(
+    data = top_20_cities,
+    aes(label = city, geometry = geometry),
+    stat = "sf_coordinates",
+    min.segment.length = 0,
+    colour = "black",
+    force = 3,
+    size = 5,
+    segment.colour = "black",
+    box.padding = 0.5,
+    segment.curvature = -0.1,
+    segment.ncp = 3,
+    segment.angle = 20,
+    family = "Roboto Mono") +
+    # nudge_x = c(1, -1.5, 2, 2, -1), 
+    # nudge_y = c(0.25, -0.25, 0.5, 0.5, -0.5)) +
+  #scale_fill_viridis_c(alpha = .4) +
+  scale_fill_gradientn(colors=met.brewer("VanGogh1", direction = -1)) +
+  labs(
+    title = 'Digital News Publications',
+  subtitle = "Mapping digital news outlets across the **US**<br>
+              The states of <span style='color:#020B97'>California</span>, <span style='color:#020B97'>New York</span> and               <span style='color:#020B97'>New Jersey</span> feature prominently<br>
+              <span style='color:#E72522'>Top 20 cities indicated</span>",
+  caption = "Using {MetBrewer} VanGogh1 colour scale <br>Chart by @Yass3r",
+  fill = "Count of digital outlets by state",
+  size = "Count by city") +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "Roboto Mono"),
+    panel.grid = element_blank(),
+    # legend.position = "none",
+    # legend.title = element_blank(), 
+    axis.text = element_blank(), 
+    axis.title = element_blank(),
+    plot.background = element_rect(fill = "#EBEDEF", color = NA),
+    plot.title = element_markdown(size = 14, face = "bold",
+                                margin = margin(t = 15)),
+    plot.subtitle = element_markdown(size = 11, 
+                                   lineheight = 1.35,
+                                   margin = margin(t = 15, b = 40),),
+    plot.caption = element_markdown(size = 8,
+                              lineheight = 1.2, hjust = 0),
+    legend.position = "bottom"
+  ) +
+  guides(fill = guide_colorbar(barwidth = 10, barheight = 0.5, title.position = "top"),
+         size = guide_legend(title.position = "top")) +
+  coord_sf()
+
+
+# save
+ggsave(filename = "digital-news.png", width = 10.5, height = 8, device = ragg::agg_png, dpi = 320)
+```
+
