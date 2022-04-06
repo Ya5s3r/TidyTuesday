@@ -25,7 +25,7 @@ Analysis of collegiate sport expenditure by gender in 2019.
 ![Screenshot](2022/22-03-29/sports-exp.png)
 
 ### 22-04-05
-Mapping of smalle, independent digital news outlets across the US - Project Oasis Study
+Mapping of small, independent digital news outlets across the US - Project Oasis Study
 [Code](https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-04-05/project-oasis-digital-news.Rmd)
 
 ![Screenshot](2022/22-04-05/digital-news.png)
