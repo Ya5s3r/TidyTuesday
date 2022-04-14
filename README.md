@@ -29,3 +29,9 @@ Mapping of small, independent digital news outlets across the US - Project Oasis
 [Code](https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-04-05/project-oasis-digital-news.Rmd)
 
 ![Screenshot](2022/22-04-05/digital-news.png)
+
+### 22-04-12
+Slope-chart indicating % deaths attributed to indoor air pollution by nation - Our World in Data.
+[Code](https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-04-12/Indoor-Air-Pollution-Final.Rmd)
+
+![Screenshot](https://raw.githubusercontent.com/Ya5s3r/TidyTuesday/main/2022/22-04-12/indoor-air-pollution.png)
