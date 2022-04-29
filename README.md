@@ -39,6 +39,7 @@ Slope-chart indicating % deaths attributed to indoor air pollution by nation - O
 ### 22-04-26
 Circular visual of the Kaggle Notebooks of the Week - Hidden Gems project. Text searching for references of 'EDA' - exploratory data analysis in either the notebook title or review. It appears to be a common theme!
 Inspiration from https://github.com/Ijeamakaanyene/tidytuesday
+
 [Code](https://github.com/Ya5s3r/TidyTuesday/blob/main/2022/22-04-26/Kaggle-Hidden-Gems.Rmd)
 
 ![Screenshot](https://raw.githubusercontent.com/Ya5s3r/TidyTuesday/main/2022/22-04-26/kaggle-hidden-gems.png)
